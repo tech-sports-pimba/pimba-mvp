@@ -253,16 +253,22 @@ def main():
     else:
         # MODO PRODUÇÃO (DEBUG=False): streamlit-authenticator
         # Inicializa authenticator
+        # IMPORTANTE: auto_hash=False para não tentar modificar secrets (read-only)
         authenticator = stauth.Authenticate(
             dict(st.secrets['credentials']),
             st.secrets['cookie']['name'],
             st.secrets['cookie']['key'],
             st.secrets['cookie']['expiry_days'],
-            st.secrets.get('preauthorized', {})
+            auto_hash=False  # Não tenta modificar secrets
         )
 
         # Tela de login (API nova - não retorna valores)
-        authenticator.login()
+        # max_login_attempts=None desabilita registro de tentativas (que modifica secrets)
+        try:
+            authenticator.login(max_login_attempts=None)
+        except:
+            # Fallback se max_login_attempts não existir
+            authenticator.login()
 
         # Verifica status no session_state (API nova)
         if st.session_state.get("authentication_status") == False:
