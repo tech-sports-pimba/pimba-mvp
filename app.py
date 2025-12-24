@@ -77,37 +77,78 @@ def wait_for_api_health(max_retries: int = MAX_HEALTH_RETRIES) -> bool:
 
 
 def render_sidebar():
-    """Renderiza sidebar com navegação."""
+    """Renderiza sidebar moderna e mobile-friendly."""
     with st.sidebar:
-        st.title("💪 Pimba")
-        st.caption("Personal Trainer Manager")
-        st.divider()
+        # Logo e branding
+        st.markdown("""
+            <div style="text-align: center; padding: 1rem 0;">
+                <div style="font-size: 3rem;">💪</div>
+                <h2 style="margin: 0.5rem 0 0 0; font-weight: 700;">Pimba</h2>
+                <p style="color: #666; font-size: 0.85rem; margin: 0;">Personal Trainer Manager</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("---")
 
         # Verifica se está autenticado
         if st.session_state.get("authenticated", False):
             user_info = st.session_state.get("user_info", {})
-            st.write(f"👤 **{user_info.get('nome', 'Usuário')}**")
-            st.caption(f"Role: {user_info.get('role', 'N/A')}")
-            st.divider()
+
+            # Card do usuário
+            st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; color: white;">
+                    <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem;">
+                        👤 {user_info.get('nome', 'Usuário')}
+                    </div>
+                    <div style="font-size: 0.85rem; opacity: 0.9;">
+                        {user_info.get('email', 'email@exemplo.com')}
+                    </div>
+                    <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.5rem;">
+                        🎭 {user_info.get('role', 'N/A').upper()}
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+            # Navegação principal
+            st.markdown("### 📍 Navegação")
+
+            menu_items = {
+                "🏠 Dashboard": "🏠",
+                "👥 Meus Alunos": "👥",
+                "📅 Agenda": "📅",
+                "💪 Treinos": "💪",
+                "⏱️ Timer": "⏱️",
+                "💰 Financeiro": "💰",
+                "📊 Evolução": "📊",
+            }
 
             menu = st.radio(
-                "📍 Navegação",
-                ["🏠 Dashboard", "👥 Meus Alunos", "📅 Agenda", "💪 Treinos", "⏱️ Timer", "💰 Financeiro", "📊 Evolução"],
+                "menu",
+                list(menu_items.keys()),
                 label_visibility="collapsed",
             )
 
-            st.divider()
+            st.markdown("---")
 
-            if st.button("🚪 Sair", use_container_width=True):
-                # Limpa sessão
-                for key in list(st.session_state.keys()):
-                    if key not in ["api_thread", "api_started", "api_ready"]:
-                        del st.session_state[key]
-                st.rerun()
+            # Botão de sair
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                if st.button("🚪 Sair", use_container_width=True, type="secondary"):
+                    # Limpa sessão
+                    for key in list(st.session_state.keys()):
+                        if key not in ["api_thread", "api_started", "api_ready"]:
+                            del st.session_state[key]
+                    st.rerun()
+
+            # Footer
+            st.markdown("<br>" * 2, unsafe_allow_html=True)
+            st.caption("v0.1.0 - MVP")
+            st.caption(f"🔗 API: {API_PORT}")
 
             return menu
         else:
-            st.info("🔒 Não autenticado")
+            st.info("🔒 Faça login para acessar")
             return None
 
 

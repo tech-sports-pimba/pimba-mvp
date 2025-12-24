@@ -1,14 +1,19 @@
-"""Dashboard principal."""
+"""Dashboard principal moderno e mobile-first."""
 import streamlit as st
+from ui.components import custom_css, metric_card, empty_state, section_header, stat_grid
 
 
 def render_dashboard(api_base_url: str):
     """Renderiza dashboard baseado no role do usuário."""
+    # Aplica CSS customizado
+    custom_css()
+
     user_info = st.session_state.get("user_info", {})
     role = user_info.get("role", "unknown")
 
-    st.title("🏠 Dashboard")
-    st.markdown(f"**Bem-vindo(a), {user_info.get('nome', 'Usuário')}!**")
+    # Cabeçalho com saudação
+    st.markdown(f"# 👋 Olá, {user_info.get('nome', 'Usuário')}!")
+    st.caption(f"📅 Bem-vindo de volta ao seu painel")
     st.markdown("---")
 
     if role == "admin":
@@ -23,52 +28,118 @@ def render_admin_dashboard(api_base_url: str):
     """Dashboard para admins."""
     st.subheader("🔧 Painel Administrativo")
 
-    col1, col2, col3 = st.columns(3)
+    # Grid de métricas
+    stats = [
+        {"title": "Personals", "value": "0", "icon": "👨‍💼", "color": "info"},
+        {"title": "Alunos", "value": "0", "icon": "👥", "color": "success"},
+        {"title": "Treinos Hoje", "value": "0", "icon": "📅", "color": "warning"},
+        {"title": "Receita Mês", "value": "R$ 0", "icon": "💰", "color": "default"},
+    ]
+    stat_grid(stats)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Seções
+    col1, col2 = st.columns(2)
 
     with col1:
-        st.metric("Total de Personals", "0", help="Total de personal trainers cadastrados")
+        section_header("📊 Atividade Recente", "Últimas ações na plataforma")
+        empty_state(
+            icon="📋",
+            title="Nenhuma atividade ainda",
+            description="As atividades dos personals aparecerão aqui"
+        )
 
     with col2:
-        st.metric("Total de Alunos", "0", help="Total de alunos na plataforma")
-
-    with col3:
-        st.metric("Agendamentos Hoje", "0", help="Total de agendamentos para hoje")
-
-    st.info("🚧 Estatísticas completas serão implementadas nas próximas fases")
+        section_header("⚠️ Alertas do Sistema", "Requer atenção")
+        empty_state(
+            icon="✅",
+            title="Tudo funcionando!",
+            description="Nenhum alerta no momento"
+        )
 
 
 def render_personal_dashboard(api_base_url: str, user_info: dict):
     """Dashboard para personals."""
     st.subheader("💪 Resumo do seu Negócio")
 
-    col1, col2, col3, col4 = st.columns(4)
+    # Grid de métricas principais
+    stats = [
+        {"title": "Alunos Ativos", "value": "0", "icon": "👥", "color": "success"},
+        {"title": "Treinos Hoje", "value": "0", "icon": "📅", "color": "info"},
+        {"title": "Receita Mês", "value": "R$ 0,00", "icon": "💰", "color": "default"},
+        {"title": "Fichas Criadas", "value": "0", "icon": "📋", "color": "warning"},
+    ]
+    stat_grid(stats)
 
-    with col1:
-        st.metric("Alunos Ativos", "0", help="Alunos com status ativo")
+    st.markdown("<br><br>", unsafe_allow_html=True)
 
-    with col2:
-        st.metric("Treinos Hoje", "0", help="Agendamentos para hoje")
+    # Layout responsivo com tabs
+    tab1, tab2, tab3 = st.tabs(["📅 Agenda", "👥 Alunos", "💡 Insights"])
 
-    with col3:
-        st.metric("Receita Mês", "R$ 0,00", help="Total recebido no mês atual")
+    with tab1:
+        section_header("Próximos Agendamentos", "Seus treinos marcados")
 
-    with col4:
-        st.metric("Fichas de Treino", "0", help="Total de fichas criadas")
+        # Empty state bonito
+        empty_state(
+            icon="📅",
+            title="Nenhum treino agendado",
+            description="Você ainda não tem agendamentos. Use o módulo Agenda para criar.",
+            action_text="➕ Criar Agendamento"
+        )
 
-    st.markdown("---")
+    with tab2:
+        section_header("Alunos Recentes", "Últimos cadastros")
 
-    # Próximos agendamentos
-    st.subheader("📅 Próximos Agendamentos")
-    st.info("🚧 Você ainda não tem agendamentos. Use o módulo Agenda para criar.")
+        empty_state(
+            icon="👥",
+            title="Nenhum aluno cadastrado",
+            description="Comece adicionando seus alunos no módulo Meus Alunos.",
+            action_text="➕ Adicionar Aluno"
+        )
 
-    st.markdown("---")
+    with tab3:
+        section_header("Insights do Mês", "Estatísticas e tendências")
 
-    # Alunos recentes
-    st.subheader("👥 Alunos Recentes")
-    st.info("🚧 Você ainda não tem alunos cadastrados. Use o módulo Meus Alunos para cadastrar.")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("""
+                <div class="custom-card">
+                    <h4>📈 Crescimento</h4>
+                    <p style="color: #666;">Em breve você verá gráficos de crescimento de alunos e receita.</p>
+                </div>
+            """, unsafe_allow_html=True)
+
+        with col2:
+            st.markdown("""
+                <div class="custom-card">
+                    <h4>⭐ Engajamento</h4>
+                    <p style="color: #666;">Acompanhe a frequência e evolução dos seus alunos.</p>
+                </div>
+            """, unsafe_allow_html=True)
+
+    # Card de ação rápida
+    st.markdown("<br>", unsafe_allow_html=True)
+    with st.expander("⚡ Ações Rápidas", expanded=False):
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.button("➕ Novo Aluno", use_container_width=True)
+
+        with col2:
+            st.button("📅 Agendar Treino", use_container_width=True)
+
+        with col3:
+            st.button("💪 Nova Ficha", use_container_width=True)
 
 
 def render_aluno_dashboard(api_base_url: str, user_info: dict):
     """Dashboard para alunos (futuro)."""
     st.subheader("📊 Seu Progresso")
-    st.info("🚧 Dashboard do aluno será implementado em fases futuras")
+
+    empty_state(
+        icon="🚧",
+        title="Dashboard do aluno em construção",
+        description="Em breve você terá acesso ao seu histórico de treinos e evolução."
+    )
