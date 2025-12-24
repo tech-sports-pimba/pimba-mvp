@@ -49,6 +49,11 @@ pimba-crm-firebase-adminsdk-*.json
 # Streamlit
 .streamlit/secrets.toml
 
+# Session storage
+.sessions/
+.last_login
+.current_session.json
+
 # Alembic
 alembic/versions/__pycache__/
 

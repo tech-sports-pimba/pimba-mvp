@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 import requests
 import os
 import json
-from utils.session_manager import save_session
+from utils.single_file_session import save_auth_single_file
 from config.settings import settings
 
 
@@ -131,6 +131,41 @@ def render_auth_page(api_base_url: str):
     if is_debug:
         st.info("🚧 **Modo Desenvolvimento Ativo** (DEBUG=True)")
 
+        # AUTO-LOGIN: Restaura último perfil usado
+        last_login_file = ".last_login"
+
+        # Verifica se deve fazer auto-login
+        if not st.session_state.get("authenticated", False) and os.path.exists(last_login_file):
+            try:
+                with open(last_login_file, 'r') as f:
+                    last_profile = f.read().strip()
+
+                if last_profile == "admin":
+                    admin_info = {
+                        "user_id": 1,
+                        "nome": settings.DEV_ADMIN_NAME,
+                        "email": settings.DEV_ADMIN_EMAIL,
+                        "role": "admin",
+                        "firebase_uid": settings.DEV_ADMIN_UID,
+                    }
+                    # DEBUG: usa save_auth_single_file (com persistência)
+                    save_auth_single_file(settings.DEV_ADMIN_TOKEN, admin_info)
+                    st.rerun()
+                elif last_profile == "personal":
+                    personal_info = {
+                        "user_id": 2,
+                        "nome": settings.DEV_PERSONAL_NAME,
+                        "email": settings.DEV_PERSONAL_EMAIL,
+                        "role": "personal",
+                        "firebase_uid": settings.DEV_PERSONAL_UID,
+                        "personal_id": settings.DEV_PERSONAL_ID,
+                    }
+                    # DEBUG: usa save_auth_single_file (com persistência)
+                    save_auth_single_file(settings.DEV_PERSONAL_TOKEN, personal_info)
+                    st.rerun()
+            except:
+                pass  # Ignora erros silenciosamente
+
         # Opção de trocar perfil
         with st.expander("Trocar perfil de teste"):
             col1, col2 = st.columns(2)
@@ -144,7 +179,11 @@ def render_auth_page(api_base_url: str):
                         "role": "admin",
                         "firebase_uid": settings.DEV_ADMIN_UID,
                     }
-                    save_session(settings.DEV_ADMIN_TOKEN, admin_info)
+                    # Salva último perfil usado
+                    with open(last_login_file, 'w') as f:
+                        f.write("admin")
+                    # DEBUG: usa save_auth_single_file (com persistência)
+                    save_auth_single_file(settings.DEV_ADMIN_TOKEN, admin_info)
                     st.rerun()
 
             with col2:
@@ -157,7 +196,11 @@ def render_auth_page(api_base_url: str):
                         "firebase_uid": settings.DEV_PERSONAL_UID,
                         "personal_id": settings.DEV_PERSONAL_ID,
                     }
-                    save_session(settings.DEV_PERSONAL_TOKEN, personal_info)
+                    # Salva último perfil usado
+                    with open(last_login_file, 'w') as f:
+                        f.write("personal")
+                    # DEBUG: usa save_auth_single_file (com persistência)
+                    save_auth_single_file(settings.DEV_PERSONAL_TOKEN, personal_info)
                     st.rerun()
 
     # PRODUÇÃO: Firebase Auth
@@ -313,8 +356,8 @@ def authenticate_with_firebase(email: str, password: str, api_base_url: str):
             if backend_response.status_code == 200:
                 user_data = backend_response.json()
 
-                # Salva na sessão usando session manager
-                save_session(id_token, user_data)
+                # Salva na sessão com persistência
+                save_auth_single_file(id_token, user_data)
 
                 st.success(f"✅ Bem-vindo, {user_data.get('nome', 'Usuário')}!")
                 st.rerun()
@@ -461,8 +504,8 @@ def render_google_signin(firebase_config: dict, api_base_url: str):
             user_data = result.get("user", {})
             token = result.get("token", "")
 
-            # Salva na sessão usando session manager
-            save_session(token, user_data)
+            # Salva na sessão com persistência
+            save_auth_single_file(token, user_data)
             st.session_state.show_google_auth = False
 
             st.success(f"✅ Bem-vindo, {user_data.get('nome', 'Usuário')}!")

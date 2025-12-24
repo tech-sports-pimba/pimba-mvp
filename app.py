@@ -14,6 +14,7 @@ import uvicorn
 from typing import Optional
 from config.settings import settings
 from utils.session_manager import init_session, validate_session, clear_session
+from utils.single_file_session import restore_auth_single_file, clear_auth_single_file
 
 # Configuração da página (deve ser o primeiro comando Streamlit)
 st.set_page_config(
@@ -142,8 +143,8 @@ def render_sidebar():
             col1, col2 = st.columns([3, 1])
             with col1:
                 if st.button("🚪 Sair", use_container_width=True, type="secondary"):
-                    # Limpa sessão usando session manager
-                    clear_session()
+                    # Limpa sessão e persistência
+                    clear_auth_single_file()
                     st.rerun()
 
          
@@ -180,14 +181,35 @@ def main():
                 )
                 st.stop()
 
-    # 3. Renderiza UI baseado em autenticação
-    if not st.session_state.get("authenticated", False):
-        # Tela de login
-        render_auth_page(API_BASE_URL)
+    # 3. Tenta restaurar sessão (só quando não está na página de login)
+    current_page = st.query_params.get("page", "app")
+
+    if current_page != "login":
+        # Tenta restaurar sessão do arquivo único
+        restore_auth_single_file()
+
+    # 4. Roteamento baseado em autenticação
+    is_authenticated = st.session_state.get("authenticated", False)
+
+    if not is_authenticated:
+        # Não autenticado: redireciona para /login
+        if current_page != "login":
+            st.query_params["page"] = "login"
+            st.rerun()
+        else:
+            # Mostra página de login
+            render_auth_page(API_BASE_URL)
     else:
+        # Autenticado: remove query param de login e mostra dashboard
+        if current_page == "login":
+            if "page" in st.query_params:
+                del st.query_params["page"]
+            st.rerun()
+
         # Valida sessão antes de renderizar (previne sessões expiradas)
         if not validate_session(API_BASE_URL):
             st.warning("⚠️ Sessão expirada. Faça login novamente.")
+            st.query_params["page"] = "login"
             st.rerun()
             return
 
