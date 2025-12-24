@@ -13,6 +13,7 @@ import requests
 import uvicorn
 from typing import Optional
 from config.settings import settings
+from utils.session_manager import init_session, validate_session, clear_session
 
 # Configuração da página (deve ser o primeiro comando Streamlit)
 st.set_page_config(
@@ -26,6 +27,8 @@ st.set_page_config(
 from ui.auth_ui import render_auth_page
 from ui.dashboard_ui import render_dashboard
 from ui.alunos_ui import render_alunos_page
+from ui.agenda_ui import render_agenda_page
+from ui.treinos_ui import render_treinos_page
 
 # Configurações da API
 API_HOST = settings.API_HOST
@@ -136,10 +139,8 @@ def render_sidebar():
             col1, col2 = st.columns([3, 1])
             with col1:
                 if st.button("🚪 Sair", use_container_width=True, type="secondary"):
-                    # Limpa sessão
-                    for key in list(st.session_state.keys()):
-                        if key not in ["api_thread", "api_started", "api_ready"]:
-                            del st.session_state[key]
+                    # Limpa sessão usando session manager
+                    clear_session()
                     st.rerun()
 
             # Footer
@@ -155,6 +156,9 @@ def render_sidebar():
 
 def main():
     """Aplicação principal."""
+    # 0. Inicializa gerenciamento de sessão
+    init_session()
+
     # 1. Inicializa API em thread (idempotente)
     init_api_thread()
 
@@ -181,6 +185,12 @@ def main():
         # Tela de login
         render_auth_page(API_BASE_URL)
     else:
+        # Valida sessão antes de renderizar (previne sessões expiradas)
+        if not validate_session(API_BASE_URL):
+            st.warning("⚠️ Sessão expirada. Faça login novamente.")
+            st.rerun()
+            return
+
         # Renderiza sidebar e conteúdo
         menu = render_sidebar()
 
@@ -189,11 +199,11 @@ def main():
         elif menu == "👥 Meus Alunos":
             render_alunos_page(API_BASE_URL)
         elif menu == "📅 Agenda":
-            st.info("🚧 Módulo de Agenda em desenvolvimento (Fase 3)")
+            render_agenda_page(API_BASE_URL)
         elif menu == "💪 Treinos":
-            st.info("🚧 Módulo de Treinos em desenvolvimento (Fase 4)")
+            render_treinos_page(API_BASE_URL)
         elif menu == "⏱️ Timer":
-            st.info("🚧 Timer de Treino em desenvolvimento (Fase 4)")
+            st.info("🚧 Timer de Treino em desenvolvimento (implementando...)")
         elif menu == "💰 Financeiro":
             st.info("🚧 Módulo Financeiro em desenvolvimento (Fase 5)")
         elif menu == "📊 Evolução":

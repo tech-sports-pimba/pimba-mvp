@@ -6,6 +6,7 @@ from core.database import get_db
 from core.models import User, Personal
 from core.enums import UserRole
 from auth.firebase_auth import verify_firebase_token
+from config.settings import settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -45,15 +46,32 @@ async def get_current_user(
             detail="Formato de Authorization header inválido",
         )
 
-    # Valida token com Firebase
-    try:
-        decoded_token = verify_firebase_token(token)
-        firebase_uid = decoded_token["uid"]
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
-        )
+    # MODO DEBUG: Aceita tokens mock para desenvolvimento
+    if settings.DEBUG and token.startswith("dev-mock-"):
+        logger.debug(f"Modo DEBUG: aceitando token mock '{token}'")
+
+        # Mapeia tokens mock para firebase_uid mockados (carregados do .env)
+        mock_token_map = {
+            settings.DEV_ADMIN_TOKEN: settings.DEV_ADMIN_UID,
+            settings.DEV_PERSONAL_TOKEN: settings.DEV_PERSONAL_UID,
+        }
+
+        firebase_uid = mock_token_map.get(token)
+        if not firebase_uid:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token mock desconhecido",
+            )
+    else:
+        # PRODUÇÃO: Valida token com Firebase
+        try:
+            decoded_token = verify_firebase_token(token)
+            firebase_uid = decoded_token["uid"]
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=str(e),
+            )
 
     # Busca User no DB
     user = db.query(User).filter(User.firebase_uid == firebase_uid).first()

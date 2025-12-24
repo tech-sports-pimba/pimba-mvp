@@ -29,6 +29,18 @@ class Settings(BaseSettings):
     # Flags
     DEBUG: bool = Field(default=False, description="Debug mode")
 
+    # Credenciais de desenvolvimento (apenas quando DEBUG=True)
+    DEV_ADMIN_UID: str = Field(default="dev-mock-uid-admin")
+    DEV_ADMIN_EMAIL: str = Field(default="admin@pimba.com")
+    DEV_ADMIN_NAME: str = Field(default="Admin")
+    DEV_ADMIN_TOKEN: str = Field(default="dev-mock-token")
+
+    DEV_PERSONAL_UID: str = Field(default="dev-mock-uid-personal")
+    DEV_PERSONAL_EMAIL: str = Field(default="personal@pimba.com")
+    DEV_PERSONAL_NAME: str = Field(default="Personal Trainer")
+    DEV_PERSONAL_TOKEN: str = Field(default="dev-mock-token-personal")
+    DEV_PERSONAL_ID: int = Field(default=1)
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

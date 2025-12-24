@@ -6,18 +6,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Flag para garantir inicialização única
-_firebase_initialized = False
-
 
 def initialize_firebase():
     """
     Inicializa Firebase Admin SDK.
     Chamado no startup da API.
+    Usa checagem nativa do Firebase para evitar duplicação.
     """
-    global _firebase_initialized
-
-    if _firebase_initialized:
+    # Verifica se Firebase já foi inicializado (método oficial)
+    if firebase_admin._apps:
         logger.info("Firebase já inicializado, pulando...")
         return
 
@@ -25,7 +22,6 @@ def initialize_firebase():
         cred_dict = settings.firebase_credentials
         cred = credentials.Certificate(cred_dict)
         firebase_admin.initialize_app(cred)
-        _firebase_initialized = True
         logger.info("✅ Firebase Admin SDK inicializado com sucesso")
     except Exception as e:
         logger.error(f"❌ Erro ao inicializar Firebase: {e}")

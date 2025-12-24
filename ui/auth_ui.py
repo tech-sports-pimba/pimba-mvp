@@ -4,31 +4,18 @@ import streamlit.components.v1 as components
 import requests
 import os
 import json
+from utils.session_manager import save_session
+from config.settings import settings
 
 
 def render_auth_page(api_base_url: str):
     """
     Renderiza página de login moderna.
-    - DEBUG=True: auto-login como Personal (desenvolvimento)
-    - DEBUG=False: login via Firebase (Google ou email/senha)
+    - DEBUG=True: Modo desenvolvimento com logins mock rápidos (sem Firebase)
+    - DEBUG=False: Login via Firebase (Google ou email/senha)
     """
     # Verifica modo DEBUG
     is_debug = os.getenv("DEBUG", "False").lower() == "true"
-
-    # Auto-login em modo desenvolvimento
-    if is_debug and "dev_auto_login_done" not in st.session_state:
-        st.session_state.authenticated = True
-        st.session_state.user_info = {
-            "user_id": 2,
-            "nome": "Personal Trainer",
-            "email": "personal@pimba.com",
-            "role": "personal",
-            "firebase_uid": "dev-mock-uid-personal",
-            "personal_id": 1,
-        }
-        st.session_state.auth_token = "dev-mock-token-personal"
-        st.session_state.dev_auto_login_done = True
-        st.rerun()
 
     # CSS customizado para página de login
     st.markdown("""
@@ -139,8 +126,6 @@ def render_auth_page(api_base_url: str):
         </div>
     """, unsafe_allow_html=True)
 
-    # Card de login
-    st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
     # DESENVOLVIMENTO: Modo debug ativo
     if is_debug:
@@ -152,27 +137,27 @@ def render_auth_page(api_base_url: str):
 
             with col1:
                 if st.button("👨‍💼 Admin", use_container_width=True):
-                    st.session_state.user_info = {
+                    admin_info = {
                         "user_id": 1,
-                        "nome": "Admin",
-                        "email": "admin@pimba.com",
+                        "nome": settings.DEV_ADMIN_NAME,
+                        "email": settings.DEV_ADMIN_EMAIL,
                         "role": "admin",
-                        "firebase_uid": "dev-mock-uid-admin",
+                        "firebase_uid": settings.DEV_ADMIN_UID,
                     }
-                    st.session_state.auth_token = "dev-mock-token"
+                    save_session(settings.DEV_ADMIN_TOKEN, admin_info)
                     st.rerun()
 
             with col2:
                 if st.button("💪 Personal", use_container_width=True, type="primary"):
-                    st.session_state.user_info = {
+                    personal_info = {
                         "user_id": 2,
-                        "nome": "Personal Trainer",
-                        "email": "personal@pimba.com",
+                        "nome": settings.DEV_PERSONAL_NAME,
+                        "email": settings.DEV_PERSONAL_EMAIL,
                         "role": "personal",
-                        "firebase_uid": "dev-mock-uid-personal",
-                        "personal_id": 1,
+                        "firebase_uid": settings.DEV_PERSONAL_UID,
+                        "personal_id": settings.DEV_PERSONAL_ID,
                     }
-                    st.session_state.auth_token = "dev-mock-token-personal"
+                    save_session(settings.DEV_PERSONAL_TOKEN, personal_info)
                     st.rerun()
 
     # PRODUÇÃO: Firebase Auth
@@ -183,13 +168,6 @@ def render_auth_page(api_base_url: str):
 
     # Footer
     st.markdown("---")
-    footer_text = "Modo Desenvolvimento" if is_debug else "Produção"
-    st.markdown(f"""
-        <div style="text-align: center; color: #999; font-size: 0.875rem; padding: 1rem 0;">
-            <p>💡 <small>Desenvolvido com Streamlit + FastAPI + Firebase</small></p>
-            <p><small>Ambiente: {footer_text}</small></p>
-        </div>
-    """, unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)  # Fecha login-container
 
@@ -335,10 +313,8 @@ def authenticate_with_firebase(email: str, password: str, api_base_url: str):
             if backend_response.status_code == 200:
                 user_data = backend_response.json()
 
-                # Salva na sessão
-                st.session_state.authenticated = True
-                st.session_state.auth_token = id_token
-                st.session_state.user_info = user_data
+                # Salva na sessão usando session manager
+                save_session(id_token, user_data)
 
                 st.success(f"✅ Bem-vindo, {user_data.get('nome', 'Usuário')}!")
                 st.rerun()
@@ -479,20 +455,18 @@ def render_google_signin(firebase_config: dict, api_base_url: str):
     # Renderiza componente
     result = components.html(html_code, height=150, scrolling=False)
 
-    # Processa resultado do login
-    if result:
+    # Processa resultado do login (result pode ser None ou um dict)
+    if result and isinstance(result, dict):
         if result.get("success"):
-            user_data = result["user"]
-            token = result["token"]
+            user_data = result.get("user", {})
+            token = result.get("token", "")
 
-            # Salva na sessão
-            st.session_state.authenticated = True
-            st.session_state.auth_token = token
-            st.session_state.user_info = user_data
+            # Salva na sessão usando session manager
+            save_session(token, user_data)
             st.session_state.show_google_auth = False
 
             st.success(f"✅ Bem-vindo, {user_data.get('nome', 'Usuário')}!")
             st.rerun()
         elif result.get("error"):
-            st.error(f"❌ {result['error']}")
+            st.error(f"❌ {result.get('error', 'Erro desconhecido')}")
             st.session_state.show_google_auth = False
