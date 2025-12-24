@@ -22,6 +22,7 @@ class AlunoBase(BaseModel):
     telefone: Optional[str] = Field(None, max_length=50)
     data_nascimento: Optional[date] = None
     objetivo: Optional[str] = None
+    local_padrao: Optional[str] = Field(None, max_length=500, description="Endereço/local padrão de treino")
 
 
 class AlunoCreate(AlunoBase):
@@ -36,6 +37,7 @@ class AlunoUpdate(BaseModel):
     telefone: Optional[str] = Field(None, max_length=50)
     data_nascimento: Optional[date] = None
     objetivo: Optional[str] = None
+    local_padrao: Optional[str] = Field(None, max_length=500)
     ativo: Optional[bool] = None
 
 

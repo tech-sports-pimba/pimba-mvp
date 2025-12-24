@@ -29,6 +29,7 @@ from ui.dashboard_ui import render_dashboard
 from ui.alunos_ui import render_alunos_page
 from ui.agenda_ui import render_agenda_page
 from ui.treinos_ui import render_treinos_page
+from ui.timer_ui import render_timer_livre_page
 
 # Configurações da API
 API_HOST = settings.API_HOST
@@ -143,10 +144,7 @@ def render_sidebar():
                     clear_session()
                     st.rerun()
 
-            # Footer
-            st.markdown("<br>" * 2, unsafe_allow_html=True)
-            st.caption("v0.1.0 - MVP")
-            st.caption(f"🔗 API: {API_PORT}")
+         
 
             return menu
         else:
@@ -203,7 +201,7 @@ def main():
         elif menu == "💪 Treinos":
             render_treinos_page(API_BASE_URL)
         elif menu == "⏱️ Timer":
-            st.info("🚧 Timer de Treino em desenvolvimento (implementando...)")
+            render_timer_livre_page()
         elif menu == "💰 Financeiro":
             st.info("🚧 Módulo Financeiro em desenvolvimento (Fase 5)")
         elif menu == "📊 Evolução":

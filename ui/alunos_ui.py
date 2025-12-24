@@ -1,9 +1,19 @@
 """UI de gestão de alunos - moderna e mobile-first."""
 import streamlit as st
 import requests
+import urllib.parse
 from typing import Dict, Any, Optional
 from datetime import date
 from ui.components import custom_css, empty_state, section_header, badge
+
+
+def get_google_maps_url(local: str) -> str:
+    """Gera URL do Google Maps para um endereço."""
+    if not local:
+        return ""
+    # Encode o endereço para URL
+    local_encoded = urllib.parse.quote(local)
+    return f"https://www.google.com/maps/search/?api=1&query={local_encoded}"
 
 
 @st.cache_resource
@@ -87,6 +97,12 @@ def criar_aluno_form(api_url: str):
             height=100
         )
 
+        local_padrao = st.text_input(
+            "📍 Local Padrão de Treino",
+            placeholder="Academia X - Rua Y, 123 ou Casa do aluno...",
+            help="Endereço onde geralmente acontecem os treinos"
+        )
+
         submitted = st.form_submit_button("✅ Cadastrar Aluno", use_container_width=True, type="primary")
 
         if submitted:
@@ -104,6 +120,8 @@ def criar_aluno_form(api_url: str):
                 payload["data_nascimento"] = data_nasc.isoformat()
             if objetivo:
                 payload["objetivo"] = objetivo
+            if local_padrao:
+                payload["local_padrao"] = local_padrao
 
             session = get_http_session()
             try:
@@ -166,6 +184,12 @@ def editar_aluno_modal(api_url: str, aluno: Dict[str, Any]):
                 height=80
             )
 
+            local_padrao = st.text_input(
+                "📍 Local Padrão de Treino",
+                value=aluno.get('local_padrao') or "",
+                help="Endereço onde geralmente acontecem os treinos"
+            )
+
             col_btn1, col_btn2 = st.columns(2)
 
             with col_btn1:
@@ -187,6 +211,8 @@ def editar_aluno_modal(api_url: str, aluno: Dict[str, Any]):
                     payload["data_nascimento"] = data_nasc.isoformat()
                 if objetivo != (aluno.get('objetivo') or ""):
                     payload["objetivo"] = objetivo if objetivo else None
+                if local_padrao != (aluno.get('local_padrao') or ""):
+                    payload["local_padrao"] = local_padrao if local_padrao else None
 
                 if not payload:
                     st.warning("⚠️ Nenhuma alteração detectada")
@@ -228,10 +254,31 @@ def render_aluno_card(api_url: str, aluno: Dict[str, Any]):
                 <div style="color: #666; font-size: 0.9rem;">
                     📧 {aluno.get('email') or 'Sem email'}<br>
                     📱 {aluno.get('telefone') or 'Sem telefone'}<br>
-                    🎯 {aluno.get('objetivo') or 'Sem objetivo definido'}
+                    🎯 {aluno.get('objetivo') or 'Sem objetivo definido'}<br>
+                    📍 {aluno.get('local_padrao') or 'Sem local cadastrado'}
                 </div>
             </div>
         """, unsafe_allow_html=True)
+
+        # Botão do Google Maps (se tiver local)
+        if aluno.get('local_padrao'):
+            maps_url = get_google_maps_url(aluno['local_padrao'])
+            st.markdown(f"""
+                <a href="{maps_url}" target="_blank" style="text-decoration: none;">
+                    <div style="
+                        background: #10b981;
+                        color: white;
+                        padding: 0.5rem 1rem;
+                        border-radius: 8px;
+                        text-align: center;
+                        margin-bottom: 0.75rem;
+                        font-weight: 600;
+                        font-size: 0.9rem;
+                    ">
+                        🗺️ Abrir no Google Maps
+                    </div>
+                </a>
+            """, unsafe_allow_html=True)
 
         # Botões de ação
         col1, col2, col3, col4 = st.columns(4)

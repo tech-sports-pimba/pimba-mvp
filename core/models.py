@@ -63,6 +63,7 @@ class Aluno(Base):
     telefone = Column(String(50))
     data_nascimento = Column(Date)
     objetivo = Column(Text)
+    local_padrao = Column(String(500))  # Endereço/local padrão de treino
     ativo = Column(Boolean, nullable=False, default=True)
     criado_em = Column(DateTime, nullable=False, default=datetime.utcnow)
 
