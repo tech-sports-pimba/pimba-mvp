@@ -261,14 +261,15 @@ def main():
             st.secrets.get('preauthorized', {})
         )
 
-        # Tela de login
-        name, authentication_status, username = authenticator.login()
+        # Tela de login (API nova - não retorna valores)
+        authenticator.login()
 
-        if authentication_status == False:
+        # Verifica status no session_state (API nova)
+        if st.session_state.get("authentication_status") == False:
             st.error('❌ Usuário ou senha incorretos')
             st.stop()
-        elif authentication_status == None:
-            # Mostra tela de login
+        elif st.session_state.get("authentication_status") is None:
+            # Mostra tela de boas-vindas
             st.markdown("""
                 <div style="text-align: center; padding: 2rem 1rem 1rem 1rem;">
                     <div style="font-size: 4rem; margin-bottom: 1rem;">💪</div>
@@ -295,14 +296,17 @@ def main():
 
         # Se chegou aqui, está autenticado!
         # Salva informações no session_state para compatibilidade com o resto do código
-        if "authenticated" not in st.session_state:
+        if "authenticated" not in st.session_state or not st.session_state.authenticated:
+            username = st.session_state.get("username", "")
+            name = st.session_state.get("name", "Usuário")
+
             st.session_state.authenticated = True
             st.session_state.auth_token = settings.DEV_ADMIN_TOKEN  # Token mock para API
             st.session_state.user_info = {
                 "email": st.secrets['credentials']['usernames'][username].get('email', f'{username}@pimba.com'),
                 "nome": name,
                 "username": username,
-                "role": "admin" if username == "admin" else "personal",  # Ajuste conforme necessário
+                "role": "admin" if username == "admin" else "personal",
             }
 
     # 4. USUÁRIO LOGADO! 🎉
