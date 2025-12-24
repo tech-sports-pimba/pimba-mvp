@@ -1,7 +1,8 @@
 """
-Streamlit app com autenticação NATIVA do Streamlit.
+Streamlit app com autenticação via streamlit-authenticator.
 
-Usa st.login e st.user - cookies gerenciados pelo Streamlit!
+DEBUG=True: Login simples (botões)
+DEBUG=False: streamlit-authenticator (sessão persiste)
 """
 from dotenv import load_dotenv
 load_dotenv()
@@ -12,6 +13,14 @@ import threading
 import requests
 import uvicorn
 from config.settings import settings
+
+# Importa streamlit-authenticator apenas se necessário
+if not settings.DEBUG:
+    try:
+        import streamlit_authenticator as stauth
+    except ImportError:
+        st.error("⚠️ streamlit-authenticator não instalado! Execute: `pip install streamlit-authenticator`")
+        st.stop()
 
 # Configuração da página
 st.set_page_config(
@@ -81,8 +90,12 @@ def wait_for_api_health(max_retries: int = 10) -> bool:
     return False
 
 
-def render_sidebar():
-    """Renderiza sidebar (funciona em DEV e PROD)."""
+def render_sidebar(authenticator=None):
+    """Renderiza sidebar (funciona em DEV e PROD).
+
+    Args:
+        authenticator: Instância do streamlit_authenticator (apenas em produção)
+    """
     with st.sidebar:
         # Logo
         st.markdown("""
@@ -142,8 +155,11 @@ def render_sidebar():
 
         # Logout (adapta ao DEBUG)
         if st.button("🚪 Sair", use_container_width=True, type="secondary"):
-            if not settings.DEBUG:
-                st.logout()  # PRODUÇÃO: usa logout nativo
+            if not settings.DEBUG and authenticator:
+                # PRODUÇÃO: usa logout do streamlit-authenticator
+                authenticator.logout()
+                st.session_state.clear()
+                st.rerun()
             else:
                 # DESENVOLVIMENTO: limpa session_state
                 st.session_state.clear()
@@ -235,28 +251,26 @@ def main():
             login_debug()
             st.stop()
     else:
-        # MODO PRODUÇÃO (DEBUG=False): Autenticação nativa do Streamlit
-        # Verifica se st.user.is_logged_in existe (só existe quando auth está configurada)
-        try:
-            is_logged_in = st.user.is_logged_in
-        except AttributeError:
-            st.error("""
-                ❌ **Erro de Configuração**
+        # MODO PRODUÇÃO (DEBUG=False): streamlit-authenticator
+        # Inicializa authenticator
+        authenticator = stauth.Authenticate(
+            dict(st.secrets['credentials']),
+            st.secrets['cookie']['name'],
+            st.secrets['cookie']['key'],
+            st.secrets['cookie']['expiry_days'],
+            st.secrets.get('preauthorized', {})
+        )
 
-                Você configurou `DEBUG=False` mas a autenticação do Streamlit Cloud não está ativada.
+        # Tela de login
+        name, authentication_status, username = authenticator.login()
 
-                **Para resolver:**
-                1. No dashboard do Streamlit Cloud, vá em **Settings** > **Sharing**
-                2. Ative **"Require authentication"**
-                3. Configure os emails permitidos ou use Google OAuth
-
-                **OU** configure `DEBUG=True` no arquivo de Secrets para usar modo de desenvolvimento.
-            """)
+        if authentication_status == False:
+            st.error('❌ Usuário ou senha incorretos')
             st.stop()
-
-        if not is_logged_in:
+        elif authentication_status == None:
+            # Mostra tela de login
             st.markdown("""
-                <div style="text-align: center; padding: 3rem 1rem;">
+                <div style="text-align: center; padding: 2rem 1rem 1rem 1rem;">
                     <div style="font-size: 4rem; margin-bottom: 1rem;">💪</div>
                     <h1 style="font-size: 2.5rem; font-weight: 700;
                                background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
@@ -264,29 +278,39 @@ def main():
                                -webkit-text-fill-color: transparent;">
                         Pimba
                     </h1>
-                    <p style="color: #666; font-size: 1.1rem; margin-bottom: 2rem;">
+                    <p style="color: #666; font-size: 1.1rem; margin-bottom: 0.5rem;">
                         Gestão inteligente para personal trainers
                     </p>
                 </div>
             """, unsafe_allow_html=True)
 
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                if st.button("🔐 Entrar", use_container_width=True, type="primary"):
-                    st.login()
-
             st.info("""
-                **Sistema de autenticação nativa do Streamlit**
+                **✅ Sessão persistente com streamlit-authenticator**
 
-                Após o login, sua sessão será mantida automaticamente, mesmo ao recarregar a página! 🎉
+                Após o login, sua sessão será mantida automaticamente, mesmo ao recarregar a página!
 
                 O cookie expira em 30 dias.
             """)
             st.stop()
 
+        # Se chegou aqui, está autenticado!
+        # Salva informações no session_state para compatibilidade com o resto do código
+        if "authenticated" not in st.session_state:
+            st.session_state.authenticated = True
+            st.session_state.auth_token = settings.DEV_ADMIN_TOKEN  # Token mock para API
+            st.session_state.user_info = {
+                "email": st.secrets['credentials']['usernames'][username].get('email', f'{username}@pimba.com'),
+                "nome": name,
+                "username": username,
+                "role": "admin" if username == "admin" else "personal",  # Ajuste conforme necessário
+            }
+
     # 4. USUÁRIO LOGADO! 🎉
     # Renderiza sidebar e pega menu selecionado
-    menu = render_sidebar()
+    if settings.DEBUG:
+        menu = render_sidebar()
+    else:
+        menu = render_sidebar(authenticator)
 
     # Renderiza conteúdo baseado no menu
     if menu == "🏠 Dashboard":

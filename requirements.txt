@@ -10,6 +10,7 @@ alembic>=1.13.0
 
 # Auth
 firebase-admin>=6.4.0
+streamlit-authenticator>=0.3.1
 
 # Utils
 pydantic>=2.0.0

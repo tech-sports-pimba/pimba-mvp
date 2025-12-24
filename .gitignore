@@ -66,3 +66,4 @@ logs/
 .coverage
 htmlcov/
 streamlit_secrets.toml
+generate_password_hash.py
