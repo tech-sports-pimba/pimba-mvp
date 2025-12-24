@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.database import init_db
 from auth.firebase_auth import initialize_firebase
-from api.routers import auth, users, alunos, agendamentos, treinos
+from api.routers import auth, users, alunos, agendamentos, treinos, pagamentos, evolucao
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -65,5 +65,7 @@ app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(alunos.router)
 app.include_router(agendamentos.router, prefix="/agendamentos", tags=["agendamentos"])
 app.include_router(treinos.router, prefix="/treinos", tags=["treinos"])
+app.include_router(pagamentos.router)
+app.include_router(evolucao.router)
 
 logger.info("✅ Pimba API carregada com sucesso")

@@ -30,6 +30,8 @@ from ui.alunos_ui import render_alunos_page
 from ui.agenda_ui import render_agenda_page
 from ui.treinos_ui import render_treinos_page
 from ui.timer_ui import render_timer_livre_page
+from ui.pagamentos_ui import render_pagamentos_page
+from ui.evolucao_ui import render_evolucao_page
 
 # Configurações da API
 API_HOST = settings.API_HOST
@@ -206,9 +208,9 @@ def main():
         elif menu == "⏱️ Timer":
             render_timer_livre_page()
         elif menu == "💰 Financeiro":
-            st.info("🚧 Módulo Financeiro em desenvolvimento (Fase 5)")
+            render_pagamentos_page(API_BASE_URL)
         elif menu == "📊 Evolução":
-            st.info("🚧 Módulo de Evolução em desenvolvimento (Fase 6)")
+            render_evolucao_page(API_BASE_URL)
 
 
 if __name__ == "__main__":
