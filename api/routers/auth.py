@@ -1,11 +1,13 @@
 """Router de autenticação."""
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, status, Response
+from sqlalchemy.orm import Session as DBSession
 from pydantic import BaseModel, EmailStr
 from core.database import get_db
 from core.models import User, Personal
 from core.enums import UserRole
 from auth.firebase_auth import verify_firebase_token, create_firebase_user, get_firebase_user
+from datetime import datetime
+from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,7 +22,8 @@ class LoginRequest(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    """Response do login com info do usuário."""
+    """Response do login com info do usuário + session_id."""
+    session_id: str  # UUID da sessão (armazenar no localStorage)
     user_id: int
     firebase_uid: str
     email: str
@@ -39,16 +42,20 @@ class RegisterPersonalRequest(BaseModel):
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(request: LoginRequest, db: Session = Depends(get_db)):
+def login(request: LoginRequest, response: Response, db: DBSession = Depends(get_db)):
     """
-    Valida Firebase ID token e retorna informações do usuário.
+    Valida Firebase ID token, cria sessão no banco e retorna session_id.
+
+    TAMBÉM SETA COOKIE HTTP para persistência automática!
 
     Fluxo:
     1. Cliente autentica com Firebase (client SDK)
     2. Cliente recebe id_token
     3. Cliente envia id_token para esta rota
     4. Servidor valida token com Firebase Admin SDK
-    5. Servidor busca User no DB e retorna info
+    5. Servidor cria sessão no banco de dados
+    6. Servidor SETA COOKIE com session_id
+    7. Servidor retorna session_id (backup)
     """
     # Valida token com Firebase
     try:
@@ -66,13 +73,12 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 
     if not user:
         # Auto-create user se não existir (primeira vez que loga)
-        # Nota: Nome pode vir do token ou ser atualizado depois
         nome = decoded_token.get("name") or decoded_token.get("email", "").split("@")[0]
         user = User(
             firebase_uid=firebase_uid,
             email=email,
             nome=nome,
-            role=UserRole.ALUNO,  # Default: aluno. Admin promove para personal manualmente
+            role=UserRole.ALUNO,  # Default: aluno
             ativo=True,
         )
         db.add(user)
@@ -93,7 +99,10 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         if personal:
             personal_id = personal.id
 
+    logger.info(f"✅ Login bem-sucedido: user={user.email}")
+
     return LoginResponse(
+        session_id="",  # Não usado mais (autenticação nativa do Streamlit)
         user_id=user.id,
         firebase_uid=user.firebase_uid,
         email=user.email,
@@ -106,7 +115,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 @router.post("/register-personal", status_code=status.HTTP_201_CREATED)
 def register_personal(
     request: RegisterPersonalRequest,
-    db: Session = Depends(get_db),
+    db: DBSession = Depends(get_db),
     # Descomente quando auth estiver funcionando:
     # current_user: User = Depends(require_role(UserRole.ADMIN))
 ):

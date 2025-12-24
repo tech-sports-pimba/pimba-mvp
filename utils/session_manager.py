@@ -112,13 +112,14 @@ def validate_session(api_base_url: str) -> bool:
     # Atualiza atividade
     update_activity()
 
-    # Modo DEBUG: não valida tokens mock com backend
+    # Modo DEBUG ou Session Backend: não valida com backend (sessão já validada no PostgreSQL)
     auth_token = st.session_state.get("auth_token", "")
-    if auth_token.startswith("dev-mock-"):
-        logger.debug("Modo DEBUG detectado, pulando validação de backend")
+    if auth_token.startswith("dev-mock-") or auth_token.startswith("session_"):
+        logger.debug("Sessão gerenciada por backend, pulando validação com API")
+        # Para sessões backend, sempre válido (já validado no restore)
         return True
 
-    # Valida com backend (apenas se passou tempo suficiente desde última validação)
+    # Valida com backend Firebase (apenas se passou tempo suficiente desde última validação)
     last_validation = st.session_state.get("last_backend_validation")
 
     # Valida com backend a cada 5 minutos
@@ -126,7 +127,7 @@ def validate_session(api_base_url: str) -> bool:
         return True
 
     try:
-        # Tenta fazer request simples ao backend
+        # Tenta fazer request simples ao backend COM FIREBASE TOKEN
         response = requests.get(
             f"{api_base_url}/users/me",
             headers={"Authorization": f"Bearer {auth_token}"},
