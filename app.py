@@ -98,8 +98,13 @@ def render_sidebar():
         # User info (adapta ao DEBUG)
         if not settings.DEBUG:
             # PRODUÇÃO (DEBUG=False): Pega do st.user
-            email = st.user.email
-            nome = email.split('@')[0]
+            try:
+                email = st.user.email
+                nome = email.split('@')[0]
+            except AttributeError:
+                # Fallback se st.user não existir
+                email = "user@pimba.com"
+                nome = "Usuário"
         else:
             # DESENVOLVIMENTO (DEBUG=True): Pega do session_state
             user_info = st.session_state.get("user_info", {})
@@ -231,7 +236,25 @@ def main():
             st.stop()
     else:
         # MODO PRODUÇÃO (DEBUG=False): Autenticação nativa do Streamlit
-        if not st.user.is_logged_in:
+        # Verifica se st.user.is_logged_in existe (só existe quando auth está configurada)
+        try:
+            is_logged_in = st.user.is_logged_in
+        except AttributeError:
+            st.error("""
+                ❌ **Erro de Configuração**
+
+                Você configurou `DEBUG=False` mas a autenticação do Streamlit Cloud não está ativada.
+
+                **Para resolver:**
+                1. No dashboard do Streamlit Cloud, vá em **Settings** > **Sharing**
+                2. Ative **"Require authentication"**
+                3. Configure os emails permitidos ou use Google OAuth
+
+                **OU** configure `DEBUG=True` no arquivo de Secrets para usar modo de desenvolvimento.
+            """)
+            st.stop()
+
+        if not is_logged_in:
             st.markdown("""
                 <div style="text-align: center; padding: 3rem 1rem;">
                     <div style="font-size: 4rem; margin-bottom: 1rem;">💪</div>
