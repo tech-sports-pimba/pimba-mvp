@@ -24,6 +24,11 @@ def create_db_engine():
     """Cria engine com pool conservador e SSL para PostgreSQL."""
     url = get_database_url()
 
+    # SSL: apenas para bancos remotos (não localhost)
+    connect_args = {}
+    if url.startswith("postgresql://") and "localhost" not in url and "127.0.0.1" not in url:
+        connect_args = {"sslmode": "require"}
+
     # Pool pequeno para ambientes com limites de conexão
     # pool_pre_ping detecta conexões mortas
     engine = create_engine(
@@ -32,7 +37,7 @@ def create_db_engine():
         max_overflow=3,
         pool_pre_ping=True,
         pool_recycle=3600,  # Recicla conexões a cada hora
-        connect_args={"sslmode": "require"} if url.startswith("postgresql://") else {},
+        connect_args=connect_args,
         echo=False,  # Mudar para True para debug SQL
     )
     return engine
