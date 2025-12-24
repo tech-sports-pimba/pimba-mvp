@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 import requests
 import os
 import json
-from utils.single_file_session import save_auth_single_file
+from utils.cookie_session_storage import save_auth_cookie_storage
 from config.settings import settings
 
 
@@ -148,8 +148,8 @@ def render_auth_page(api_base_url: str):
                         "role": "admin",
                         "firebase_uid": settings.DEV_ADMIN_UID,
                     }
-                    # DEBUG: usa save_auth_single_file (com persistência)
-                    save_auth_single_file(settings.DEV_ADMIN_TOKEN, admin_info)
+                    # DEBUG: usa save_auth_cookie_storage (com persistência)
+                    save_auth_cookie_storage(settings.DEV_ADMIN_TOKEN, admin_info)
                     st.rerun()
                 elif last_profile == "personal":
                     personal_info = {
@@ -160,8 +160,8 @@ def render_auth_page(api_base_url: str):
                         "firebase_uid": settings.DEV_PERSONAL_UID,
                         "personal_id": settings.DEV_PERSONAL_ID,
                     }
-                    # DEBUG: usa save_auth_single_file (com persistência)
-                    save_auth_single_file(settings.DEV_PERSONAL_TOKEN, personal_info)
+                    # DEBUG: usa save_auth_cookie_storage (com persistência)
+                    save_auth_cookie_storage(settings.DEV_PERSONAL_TOKEN, personal_info)
                     st.rerun()
             except:
                 pass  # Ignora erros silenciosamente
@@ -182,8 +182,8 @@ def render_auth_page(api_base_url: str):
                     # Salva último perfil usado
                     with open(last_login_file, 'w') as f:
                         f.write("admin")
-                    # DEBUG: usa save_auth_single_file (com persistência)
-                    save_auth_single_file(settings.DEV_ADMIN_TOKEN, admin_info)
+                    # DEBUG: usa save_auth_cookie_storage (com persistência)
+                    save_auth_cookie_storage(settings.DEV_ADMIN_TOKEN, admin_info)
                     st.rerun()
 
             with col2:
@@ -199,8 +199,8 @@ def render_auth_page(api_base_url: str):
                     # Salva último perfil usado
                     with open(last_login_file, 'w') as f:
                         f.write("personal")
-                    # DEBUG: usa save_auth_single_file (com persistência)
-                    save_auth_single_file(settings.DEV_PERSONAL_TOKEN, personal_info)
+                    # DEBUG: usa save_auth_cookie_storage (com persistência)
+                    save_auth_cookie_storage(settings.DEV_PERSONAL_TOKEN, personal_info)
                     st.rerun()
 
     # PRODUÇÃO: Firebase Auth
@@ -357,7 +357,7 @@ def authenticate_with_firebase(email: str, password: str, api_base_url: str):
                 user_data = backend_response.json()
 
                 # Salva na sessão com persistência
-                save_auth_single_file(id_token, user_data)
+                save_auth_cookie_storage(id_token, user_data)
 
                 st.success(f"✅ Bem-vindo, {user_data.get('nome', 'Usuário')}!")
                 st.rerun()
@@ -505,7 +505,7 @@ def render_google_signin(firebase_config: dict, api_base_url: str):
             token = result.get("token", "")
 
             # Salva na sessão com persistência
-            save_auth_single_file(token, user_data)
+            save_auth_cookie_storage(token, user_data)
             st.session_state.show_google_auth = False
 
             st.success(f"✅ Bem-vindo, {user_data.get('nome', 'Usuário')}!")

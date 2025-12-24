@@ -14,7 +14,11 @@ import uvicorn
 from typing import Optional
 from config.settings import settings
 from utils.session_manager import init_session, validate_session, clear_session
-from utils.single_file_session import restore_auth_single_file, clear_auth_single_file
+from utils.cookie_session_storage import (
+    restore_auth_cookie_storage,
+    clear_auth_cookie_storage,
+    cleanup_expired_sessions
+)
 
 # Configuração da página (deve ser o primeiro comando Streamlit)
 st.set_page_config(
@@ -143,8 +147,8 @@ def render_sidebar():
             col1, col2 = st.columns([3, 1])
             with col1:
                 if st.button("🚪 Sair", use_container_width=True, type="secondary"):
-                    # Limpa sessão e persistência
-                    clear_auth_single_file()
+                    # Limpa sessão (cookie + arquivo)
+                    clear_auth_cookie_storage()
                     st.rerun()
 
          
@@ -181,14 +185,17 @@ def main():
                 )
                 st.stop()
 
-    # 3. Tenta restaurar sessão (só quando não está na página de login)
+    # 3. Limpa sessões expiradas
+    cleanup_expired_sessions()
+
+    # 4. Tenta restaurar sessão (cookie + arquivo server-side)
     current_page = st.query_params.get("page", "app")
 
-    if current_page != "login":
-        # Tenta restaurar sessão do arquivo único
-        restore_auth_single_file()
+    if current_page != "login" and not st.session_state.get("authenticated", False):
+        # Tenta restaurar sessão mais recente
+        restore_auth_cookie_storage()
 
-    # 4. Roteamento baseado em autenticação
+    # 5. Roteamento baseado em autenticação
     is_authenticated = st.session_state.get("authenticated", False)
 
     if not is_authenticated:
