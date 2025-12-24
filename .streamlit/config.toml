@@ -1,8 +1,9 @@
 [theme]
-primaryColor = "#667eea"
-backgroundColor = "#f8f9fa"
-secondaryBackgroundColor = "#ffffff"
-textColor = "#262730"
+# A COR DE IMPACTO (10%) - Use apenas em elementos-chave
+primaryColor = "#dc2626"  # Vermelho vibrante
+backgroundColor = "#ffffff"  # Branco puro (60% do visual)
+secondaryBackgroundColor = "#f8fafc"  # Cinza muito claro para cards (30%)
+textColor = "#0f172a"  # Azul/Preto escuro para contraste máximo
 font = "sans serif"
 
 [server]

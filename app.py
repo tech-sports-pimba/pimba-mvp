@@ -96,7 +96,7 @@ def render_sidebar():
 
             # Card do usuário
             st.markdown(f"""
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
                             padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; color: white;">
                     <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem;">
                         👤 {user_info.get('nome', 'Usuário')}

@@ -30,10 +30,17 @@ def render_auth_page(api_base_url: str):
         .app-title {
             font-size: 2rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
+        }
+
+        /* Desktop: aumenta área de login */
+        @media (min-width: 768px) {
+            .login-container {
+                max-width: 480px;
+            }
         }
 
         .app-subtitle {

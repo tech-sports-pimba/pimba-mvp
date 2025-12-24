@@ -15,6 +15,16 @@ def custom_css():
             max-width: 100%;
         }
 
+        /* Desktop: centraliza e limita largura */
+        @media (min-width: 1024px) {
+            .main .block-container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+
         /* Cards */
         .custom-card {
             background: white;
@@ -32,12 +42,12 @@ def custom_css():
 
         /* Métricas customizadas */
         .metric-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
             color: white;
             border-radius: 12px;
             padding: 1.25rem;
             margin-bottom: 1rem;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
         }
 
         .metric-card h3 {
@@ -143,8 +153,17 @@ def custom_css():
 
         .stTextInput > div > div > input:focus,
         .stSelectbox > div > div > select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+            border-color: #dc2626;
+            box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.1);
+        }
+
+        /* Grid responsivo para desktop */
+        @media (min-width: 768px) {
+            .metric-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+            }
         }
         </style>
     """, unsafe_allow_html=True)
@@ -153,10 +172,10 @@ def custom_css():
 def metric_card(title: str, value: str, icon: str = "📊", color: str = "default"):
     """Card de métrica estilizado."""
     colors = {
-        "default": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        "success": "linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)",
-        "warning": "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-        "info": "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+        "default": "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+        "success": "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+        "warning": "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
+        "info": "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
     }
 
     gradient = colors.get(color, colors["default"])
