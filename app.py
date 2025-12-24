@@ -177,6 +177,7 @@ def login_debug():
     with col1:
         if st.button("👨‍💼 Admin", use_container_width=True, type="primary"):
             st.session_state.authenticated = True
+            st.session_state.auth_token = settings.DEV_ADMIN_TOKEN  # Token mock para API
             st.session_state.user_info = {
                 "email": settings.DEV_ADMIN_EMAIL,
                 "nome": settings.DEV_ADMIN_NAME,
@@ -187,6 +188,7 @@ def login_debug():
     with col2:
         if st.button("🏋️ Personal", use_container_width=True, type="primary"):
             st.session_state.authenticated = True
+            st.session_state.auth_token = settings.DEV_PERSONAL_TOKEN  # Token mock para API
             st.session_state.user_info = {
                 "email": settings.DEV_PERSONAL_EMAIL,
                 "nome": settings.DEV_PERSONAL_NAME,
@@ -197,6 +199,7 @@ def login_debug():
     with col3:
         if st.button("🎓 Aluno", use_container_width=True, type="primary"):
             st.session_state.authenticated = True
+            st.session_state.auth_token = "dev-mock-aluno"  # Token mock genérico
             st.session_state.user_info = {
                 "email": "aluno@dev.com",
                 "nome": "Aluno Teste",
