@@ -61,4 +61,11 @@ def get_db():
 
 def init_db():
     """Cria todas as tabelas (usado no bootstrap da API)."""
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine, checkfirst=True)
+    except Exception as e:
+        # Ignora erros de ENUMs duplicados (já existem)
+        if "already exists" in str(e) or "duplicate key" in str(e):
+            pass  # Tabelas/ENUMs já criados, tudo OK
+        else:
+            raise  # Erro real, propaga
