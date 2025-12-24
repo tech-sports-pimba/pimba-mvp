@@ -25,6 +25,7 @@ st.set_page_config(
 # Imports dos módulos UI (após st.set_page_config)
 from ui.auth_ui import render_auth_page
 from ui.dashboard_ui import render_dashboard
+from ui.alunos_ui import render_alunos_page
 
 # Configurações da API
 API_HOST = settings.API_HOST
@@ -186,7 +187,7 @@ def main():
         if menu == "🏠 Dashboard":
             render_dashboard(API_BASE_URL)
         elif menu == "👥 Meus Alunos":
-            st.info("🚧 Módulo de Alunos em desenvolvimento (Fase 2)")
+            render_alunos_page(API_BASE_URL)
         elif menu == "📅 Agenda":
             st.info("🚧 Módulo de Agenda em desenvolvimento (Fase 3)")
         elif menu == "💪 Treinos":

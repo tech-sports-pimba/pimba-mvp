@@ -16,6 +16,10 @@ class Settings(BaseSettings):
         ...,
         description="Firebase service account JSON (string ou path)"
     )
+    FIREBASE_WEB_CONFIG: str = Field(
+        default="",
+        description="Firebase Web SDK config JSON (opcional, para modo produção)"
+    )
 
     # API
     API_HOST: str = Field(default="127.0.0.1", description="API host")
@@ -28,7 +32,8 @@ class Settings(BaseSettings):
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
-        "case_sensitive": False
+        "case_sensitive": False,
+        "extra": "ignore"  # Ignora variáveis extras no .env
     }
 
     @property

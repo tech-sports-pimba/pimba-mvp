@@ -9,11 +9,16 @@ Sistema multi-tenant para gestão de personal trainers, com autenticação via F
 - ✅ Modelos de dados (SQLAlchemy)
 - ✅ Firebase Auth integration
 - ✅ API REST (FastAPI) com endpoints de auth
-- ✅ Streamlit UI com login básico
+- ✅ Streamlit UI moderna e responsiva
 - ✅ Sistema multi-tenant pronto
 
+**Fase 2: Gestão de Alunos** ✅ **COMPLETA**
+- ✅ API CRUD de alunos com tenant isolation
+- ✅ UI mobile-first para gestão de alunos
+- ✅ Busca, filtros e estatísticas
+- ✅ Seed com dados de teste
+
 **Próximas Fases:**
-- 📝 Fase 2: Gestão de Alunos
 - 📅 Fase 3: Agendamentos (Calendário)
 - 💪 Fase 4: Fichas de Treino + Timer
 - 💰 Fase 5: Controle Financeiro
@@ -43,9 +48,34 @@ Edite o arquivo `.env` (já existe no projeto):
 
 ```env
 DATABASE_URL=postgresql://postgres@localhost:5432/pimba_db
-FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", ...}'  # Deixe assim por enquanto
 SECRET_KEY=qualquer-string-aleatoria
 DEBUG=True
+```
+
+#### Configurar Firebase (opcional para desenvolvimento)
+
+**Opção 1: Usar modo desenvolvimento (sem Firebase)**
+- No primeiro acesso, marque "Modo Desenvolvimento" e pule a configuração do Firebase
+
+**Opção 2: Configurar Firebase (para produção)**
+
+1. Acesse [Firebase Console](https://console.firebase.google.com)
+2. Crie um novo projeto (ou use existente)
+3. Vá em **Project Settings** → **Service Accounts**
+4. Clique em **Generate New Private Key**
+5. Salve o arquivo JSON baixado
+
+**Como usar as credenciais:**
+
+**Método A - JSON inline (recomendado para deploy):**
+```env
+FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", "project_id": "seu-projeto", ...}'
+```
+Cole todo o conteúdo do JSON baixado entre as aspas simples.
+
+**Método B - Caminho do arquivo (para desenvolvimento local):**
+```env
+FIREBASE_SERVICE_ACCOUNT_KEY=caminho/para/firebase-credentials.json
 ```
 
 ### 3. Criar banco de dados
@@ -54,7 +84,18 @@ DEBUG=True
 createdb pimba_db
 ```
 
-### 4. Executar aplicação
+### 4. Popular banco com dados de teste (opcional)
+
+```bash
+source venv/bin/activate
+python utils/seed.py
+```
+
+Isso vai criar:
+- 1 Personal Trainer de teste (email: personal@pimba.com)
+- 5 Alunos de teste (4 ativos, 1 inativo)
+
+### 5. Executar aplicação
 
 **Opção A - Com ambiente ativado (recomendado para dev):**
 ```bash
@@ -224,10 +265,15 @@ Com a aplicação rodando, acesse:
 
 Para continuar o desenvolvimento, consulte o [Plano de Desenvolvimento](/Users/igorsal/.claude/plans/adaptive-churning-hellman.md) completo.
 
-**Fase 2 - Gestão de Alunos:**
-1. Implementar `api/routers/alunos.py` (CRUD completo)
-2. Implementar `ui/alunos_ui.py` (interface de gestão)
-3. Adicionar tenant isolation nos endpoints
+**Fase 3 - Agendamentos (Calendário):**
+1. Implementar `api/routers/agendamentos.py` (CRUD completo)
+2. Implementar `ui/agenda_ui.py` (visualização de calendário)
+3. Integração com `streamlit-calendar` ou grid customizado
+
+**Fase 4 - Fichas de Treino + Timer:**
+1. Implementar `api/routers/treinos.py` e `exercicios.py`
+2. Implementar `ui/treinos_ui.py` (criação de fichas)
+3. Implementar `ui/timer_ui.py` (executor com cronômetro)
 
 ## 📄 Licença
 

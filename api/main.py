@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.database import init_db
 from auth.firebase_auth import initialize_firebase
-from api.routers import auth, users
+from api.routers import auth, users, alunos
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -62,5 +62,6 @@ def health_check():
 # Include routers
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(users.router, prefix="/users", tags=["users"])
+app.include_router(alunos.router)
 
 logger.info("✅ Pimba API carregada com sucesso")

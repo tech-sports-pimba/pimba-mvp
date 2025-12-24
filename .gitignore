@@ -31,6 +31,7 @@ wheels/
 # Firebase
 firebase-credentials.json
 *-firebase-adminsdk-*.json
+pimba-crm-firebase-adminsdk-*.json
 
 # Database
 *.db
@@ -59,3 +60,4 @@ logs/
 .pytest_cache/
 .coverage
 htmlcov/
+utils/*
