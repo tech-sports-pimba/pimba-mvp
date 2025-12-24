@@ -60,4 +60,4 @@ logs/
 .pytest_cache/
 .coverage
 htmlcov/
-utils
+streamlit_secrets.toml

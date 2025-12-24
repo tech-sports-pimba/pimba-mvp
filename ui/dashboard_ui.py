@@ -55,6 +55,24 @@ def buscar_stats_agendamentos(api_url: str):
         return {"total": 0, "hoje": 0, "semana": 0, "mes": 0}
 
 
+@st.cache_data(ttl=120)
+def buscar_fichas_recentes(api_url: str):
+    """Busca fichas de treino recentes."""
+    session = get_http_session()
+
+    try:
+        resp = session.get(
+            f"{api_url}/treinos/",
+            headers=get_auth_headers(),
+            params={"ativa": True},
+            timeout=5
+        )
+        resp.raise_for_status()
+        return resp.json().get("fichas", [])[:5]  # Retorna apenas as 5 mais recentes
+    except:
+        return []
+
+
 def render_dashboard(api_base_url: str):
     """Renderiza dashboard baseado no role do usuário."""
     # Aplica CSS customizado
@@ -170,14 +188,60 @@ def render_personal_dashboard(api_base_url: str, user_info: dict):
                 """, unsafe_allow_html=True)
 
     with tab2:
-        section_header("Alunos Recentes", "Últimos cadastros")
+        section_header("Fichas de Treino Ativas", "Seus treinos mais recentes")
 
-        empty_state(
-            icon="👥",
-            title="Nenhum aluno cadastrado",
-            description="Comece adicionando seus alunos no módulo Meus Alunos.",
-            action_text="➕ Adicionar Aluno"
-        )
+        # Busca fichas recentes
+        fichas_recentes = buscar_fichas_recentes(api_base_url)
+
+        if not fichas_recentes:
+            empty_state(
+                icon="💪",
+                title="Nenhuma ficha de treino",
+                description="Crie fichas de treino no módulo Treinos para visualizá-las aqui.",
+                action_text=None
+            )
+        else:
+            for ficha in fichas_recentes:
+                # Calcula duração total da ficha
+                duracao_total = sum(ex.get("duracao_segundos", 0) + ex.get("descanso_segundos", 0)
+                                   for ex in ficha.get("exercicios", []))
+                duracao_min = duracao_total // 60
+                duracao_seg = duracao_total % 60
+
+                aluno_nome = ficha.get("aluno_nome", "Template geral")
+                num_exercicios = len(ficha.get("exercicios", []))
+
+                st.markdown(f"""
+                    <div style="
+                        background: white;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 12px;
+                        padding: 1rem;
+                        margin-bottom: 1rem;
+                    ">
+                        <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.5rem;">
+                            💪 {ficha['nome']}
+                        </div>
+                        <div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                            👤 {aluno_nome}
+                        </div>
+                        <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: #666;">
+                            <span>📝 {num_exercicios} exercício{'s' if num_exercicios != 1 else ''}</span>
+                            <span>⏱️ {duracao_min:02d}:{duracao_seg:02d}</span>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("▶️ Executar", key=f"exec_dash_{ficha['id']}", use_container_width=True, type="primary"):
+                        st.session_state.executar_ficha_id = ficha['id']
+                        st.rerun()
+
+                with col2:
+                    if st.button("✏️ Editar", key=f"edit_dash_{ficha['id']}", use_container_width=True):
+                        st.session_state.editar_ficha_id = ficha['id']
+                        st.rerun()
 
     with tab3:
         section_header("Insights do Mês", "Estatísticas e tendências")

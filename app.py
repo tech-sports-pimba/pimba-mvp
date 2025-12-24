@@ -192,7 +192,10 @@ def main():
         # Renderiza sidebar e conteúdo
         menu = render_sidebar()
 
-        if menu == "🏠 Dashboard":
+        # Roteamento especial: se usuário clicou em executar/editar ficha no dashboard
+        if "executar_ficha_id" in st.session_state or "editar_ficha_id" in st.session_state:
+            render_treinos_page(API_BASE_URL)
+        elif menu == "🏠 Dashboard":
             render_dashboard(API_BASE_URL)
         elif menu == "👥 Meus Alunos":
             render_alunos_page(API_BASE_URL)

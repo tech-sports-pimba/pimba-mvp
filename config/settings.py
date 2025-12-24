@@ -5,6 +5,20 @@ import json
 import os
 
 
+def _get_from_streamlit_secrets(key: str, default=None):
+    """
+    Tenta obter valor de st.secrets (Streamlit Cloud).
+    Se não estiver disponível, retorna o default.
+    """
+    try:
+        import streamlit as st
+        if hasattr(st, 'secrets') and key in st.secrets:
+            return st.secrets[key]
+    except:
+        pass
+    return default
+
+
 class Settings(BaseSettings):
     """Configurações da aplicação."""
 
@@ -47,6 +61,28 @@ class Settings(BaseSettings):
         "case_sensitive": False,
         "extra": "ignore"  # Ignora variáveis extras no .env
     }
+
+    def __init__(self, **kwargs):
+        """
+        Inicializa Settings.
+        Prioridade: kwargs > st.secrets > .env > defaults
+        """
+        # Tenta carregar de st.secrets primeiro (Streamlit Cloud)
+        streamlit_values = {}
+        try:
+            import streamlit as st
+            if hasattr(st, 'secrets'):
+                # Pega todos os valores de secrets
+                for key in ['DATABASE_URL', 'FIREBASE_SERVICE_ACCOUNT_KEY', 'FIREBASE_WEB_CONFIG',
+                           'SECRET_KEY', 'API_HOST', 'API_PORT', 'DEBUG']:
+                    if key in st.secrets:
+                        streamlit_values[key] = st.secrets[key]
+        except:
+            pass
+
+        # Merge: kwargs sobrescreve st.secrets
+        merged_values = {**streamlit_values, **kwargs}
+        super().__init__(**merged_values)
 
     @property
     def firebase_credentials(self) -> dict:
